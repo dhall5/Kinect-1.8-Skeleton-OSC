@@ -24,7 +24,7 @@ namespace Microsoft.Samples.Kinect.Avateering.Filters
         /// <summary>
         /// The running average of the floor normal position.
         /// </summary>
-        private static Vector3 averagedFloorNormal = Vector3.UnitZ;
+        private static Vector3 averagedFloorNormal = Vector3.UnitY;
 
         /// <summary>
         /// CorrectSensorTilt applies camera tilt correction to the skeleton data.
@@ -46,7 +46,7 @@ namespace Microsoft.Samples.Kinect.Avateering.Filters
             // the sensorElevationAngle, as the floor plane from skeletal tracking is typically only detected when the
             // camera is pointing down and sees the floor. 
             // Note: SensorElevationAngle value varies around +/- 60 degrees.
-            Vector3 floorNormal = Vector3.UnitZ; // default value (has no tilt effect)
+            Vector3 floorNormal = Vector3.UnitY; // default value (has no tilt effect)
 
             // Assume camera base is level, and use the tilt of the Kinect motor.
             // Rotate an up vector by the negated elevation angle around the X axis
@@ -69,7 +69,7 @@ namespace Microsoft.Samples.Kinect.Avateering.Filters
 
             // Running average of floor normal
             averagedFloorNormal = (averagedFloorNormal * 0.9f) + (floorNormal * 0.1f);
-            Quaternion rotationToRoomSpace = KinectHelper.GetShortestRotationBetweenVectors(Vector3.UnitZ, averagedFloorNormal);
+            Quaternion rotationToRoomSpace = KinectHelper.GetShortestRotationBetweenVectors(Vector3.UnitY, averagedFloorNormal);
 
             Vector3 hipCenter = KinectHelper.SkeletonPointToVector3(skeleton.Joints[JointType.HipCenter].Position);
 

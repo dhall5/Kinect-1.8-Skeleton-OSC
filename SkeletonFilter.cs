@@ -38,7 +38,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
             this.tiltCompensate = true;
             this.floorOffsetCompensate = false;
             this.selfIntersectionConstraints = true;
-            this.mirrorView = false;
+            this.mirrorView = true;
             this.boneConstraints = true;
             this.filterBoneOrientations = true;
 
