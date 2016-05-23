@@ -61,13 +61,20 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
             var parentQ = Quaternion.Normalize(new Quaternion(parent.X, parent.Y, parent.Z, parent.W));
 
 
-            JointType end = body.BoneOrientations[joint.JointType].EndJoint;
+            var newq = new Quaternion();
 
-            var child = body.BoneOrientations[end].AbsoluteRotation.Quaternion;
-             var childQ = Quaternion.Normalize(new Quaternion(child.X, child.Y, child.Z, child.W));
-            //https://social.msdn.microsoft.com/Forums/en-US/3f9e03b4-2670-41b5-9a91-2b72c77fe843/using-kinect-v2-jointorientations-along-with-threejs-skinnedmesh?forum=kinectv2sdk
-            var newq = (Quaternion.Inverse(parentQ) * jointQ);
-            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), -newq.W, -newq.X, newq.Y, newq.Z);
+
+            float angle = (float)Math.Acos(Vector3.Dot(new Vector3(0, 1, 0), new Vector3(jointQ.X, jointQ.Y, jointQ.Z)));
+            //best so far
+            newq = Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), jointQ.W);
+            //newq = KinectHelper.GetShortestRotationBetweenVectors(new Vector3(0, 1, 0), new Vector3(jointQ.X, jointQ.Y, jointQ.Z));
+            //newq = Quaternion.Normalize(Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), jointQ.W));
+            newq = jointQ;
+
+
+            newq = KinectHelper.RotationBetweenQuaternions(parentQ, jointQ);
+            //newq = Quaternion.Slerp(newq, jointQ, .3f);
+            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), -newq.W, -newq.X, newq.Y, -newq.Z);
 
 
 
