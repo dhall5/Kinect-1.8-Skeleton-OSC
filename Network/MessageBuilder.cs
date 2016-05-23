@@ -8,6 +8,8 @@ using Rug.Osc;
 using System.Numerics;
 using Microsoft.Samples.Kinect.Avateering;
 
+using UnityEngine;
+
 namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
 {
     public class MessageBuilder
@@ -51,7 +53,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
                 jointName = jointName.Replace("Right", "Left");
             }
 
-            var address = String.Format("/{0}",jointName);
+            var address = String.Format("/{0}", joint.JointType);
             var position = joint.Position;
             var q = body.BoneOrientations[joint.JointType].AbsoluteRotation.Quaternion; // .AbsoluteRotation.Quaternion;
             var jointQ = new Quaternion(q.X, q.Y, q.Z, q.W);
@@ -59,8 +61,8 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
             JointType start = body.BoneOrientations[joint.JointType].StartJoint;
             var parent = body.BoneOrientations[start].AbsoluteRotation.Quaternion;
             var parentQ = Quaternion.Normalize(new Quaternion(parent.X, parent.Y, parent.Z, parent.W));
-
-
+            //var newq = KinectHelper.RotationBetweenQuaternions(parentQ, jointQ);
+            
             var newq = new Quaternion();
 
 
@@ -74,9 +76,10 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
 
             newq = KinectHelper.RotationBetweenQuaternions(parentQ, jointQ);
             newq = Quaternion.Slerp(newq, newq1, .3f);
+            //newq = Quaternion.Inverse(newq);
             return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), newq.W, -newq.X, -newq.Z, newq.Y);
 
-
+           
 
 
             /*
@@ -99,10 +102,10 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
             
             //return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), newq.W, newq.X,newq.Y, newq.Z);
             */
-            
 
 
-          
+
+
 
 
 
