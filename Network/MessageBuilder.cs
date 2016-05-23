@@ -38,6 +38,41 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
         public OscMessage BuildJointMessage(Skeleton body, Joint joint)
         {
 
+
+            string jointName = joint.JointType.ToString();
+            if (jointName.IndexOf("Left") >= 0)
+            {
+                jointName = jointName.Replace("Left", "Right");
+            }
+            else if (jointName.IndexOf("Right") >= 0)
+            {
+                jointName = jointName.Replace("Right", "Left");
+            }
+            var address = String.Format("/{0}", jointName);
+            var position = joint.Position;
+            Microsoft.Kinect.Vector4 vec;
+            vec = body.BoneOrientations[joint.JointType].HierarchicalRotation.Quaternion;
+            Quaternion qOrientation = new Quaternion(vec.X, vec.Y, vec.Z, vec.W);
+
+            JointType parentJoint = body.BoneOrientations[joint.JointType].StartJoint;
+            Microsoft.Kinect.Vector4 vecParentOrientation = body.BoneOrientations[parentJoint].HierarchicalRotation.Quaternion;
+
+
+            Quaternion qOrientationParent = new Quaternion(vecParentOrientation.X, vecParentOrientation.Y, vecParentOrientation.Z, vecParentOrientation.W);
+            Quaternion qSend;
+            qSend = (Quaternion.Normalize(qOrientationParent) * Quaternion.Conjugate(qOrientationParent)) * qOrientation;
+
+            //qSend = (Quaternion.Divide(new Quaternion(1,0,0,0), Quaternion.Normalize(qOrientationParent)) * Quaternion.Conjugate(qOrientationParent)) * qOrientation;
+            //qSend= KinectHelper.RotationBetweenQuaternions(qSend, qOrientationParent);
+            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), qSend.W, qSend.X, -qSend.Z, qSend.Y);
+
+
+
+
+            /*
+
+
+
             //https://msdn.microsoft.com/en-us/library/hh973073.aspx
 
 
@@ -76,7 +111,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
             newq = Quaternion.Slerp(newq, newq1, .3f);
             return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), newq.W, -newq.X, -newq.Z, newq.Y);
 
-
+            */
 
 
             /*
