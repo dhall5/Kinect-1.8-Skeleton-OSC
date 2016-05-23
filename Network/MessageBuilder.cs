@@ -51,7 +51,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
                 jointName = jointName.Replace("Right", "Left");
             }
 
-            var address = String.Format("/{0}", joint.JointType);
+            var address = String.Format("/{0}",jointName);
             var position = joint.Position;
             var q = body.BoneOrientations[joint.JointType].AbsoluteRotation.Quaternion; // .AbsoluteRotation.Quaternion;
             var jointQ = new Quaternion(q.X, q.Y, q.Z, q.W);
@@ -66,15 +66,15 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
 
             float angle = (float)Math.Acos(Vector3.Dot(new Vector3(0, 1, 0), new Vector3(jointQ.X, jointQ.Y, jointQ.Z)));
             //best so far
-            newq = Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), jointQ.W);
+            var newq1 = Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), jointQ.W);
             //newq = KinectHelper.GetShortestRotationBetweenVectors(new Vector3(0, 1, 0), new Vector3(jointQ.X, jointQ.Y, jointQ.Z));
             //newq = Quaternion.Normalize(Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), jointQ.W));
             newq = jointQ;
 
 
             newq = KinectHelper.RotationBetweenQuaternions(parentQ, jointQ);
-            //newq = Quaternion.Slerp(newq, jointQ, .3f);
-            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), -newq.W, -newq.X, newq.Y, -newq.Z);
+            newq = Quaternion.Slerp(newq, newq1, .3f);
+            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), newq.W, -newq.X, -newq.Z, newq.Y);
 
 
 
