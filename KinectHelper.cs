@@ -441,5 +441,7 @@ namespace Microsoft.Samples.Kinect.Avateering
                 }
             }
         }
+
+        
     }
 }

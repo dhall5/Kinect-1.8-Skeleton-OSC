@@ -37,6 +37,52 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
 
         public OscMessage BuildJointMessage(Skeleton body, Joint joint)
         {
+            string jointName = joint.JointType.ToString();
+            if (jointName.IndexOf("Left") >= 0)
+            {
+                jointName = jointName.Replace("Left", "Right");
+            }
+            else if (jointName.IndexOf("Right") >= 0)
+            {
+                jointName = jointName.Replace("Right", "Left");
+            }
+            
+            var jointRotation = body.BoneOrientations[joint.JointType].AbsoluteRotation.Matrix;
+
+            JointType parentJoint = KinectHelper.ParentBoneJoint(joint.JointType);
+            var position = body.Joints[parentJoint].Position;
+            var rotation = body.BoneOrientations[parentJoint].AbsoluteRotation.Matrix;
+
+            Matrix4x4 mjointRot = new Matrix4x4(jointRotation.M11, jointRotation.M12, jointRotation.M13, jointRotation.M14, jointRotation.M21, jointRotation.M22, jointRotation.M23, jointRotation.M24, jointRotation.M31, jointRotation.M32, jointRotation.M33, jointRotation.M34, jointRotation.M41, jointRotation.M42, jointRotation.M43, jointRotation.M44);
+            Matrix4x4 mparentRot = new Matrix4x4(rotation.M11, rotation.M12, rotation.M13, rotation.M14, rotation.M21, rotation.M22, rotation.M23, rotation.M24, rotation.M31, rotation.M32, rotation.M33, rotation.M34, rotation.M41, rotation.M42, rotation.M43, rotation.M44);
+
+
+            Matrix4x4 degrees90= Matrix4x4.CreateRotationY(3.14159f);
+            Quaternion rotate90 = Quaternion.CreateFromRotationMatrix(degrees90);
+            mparentRot=Matrix4x4.Transform(mparentRot, rotate90);
+
+            Quaternion qjointOrientation = Quaternion.CreateFromRotationMatrix(mjointRot);
+            Quaternion qparentOrientation = Quaternion.CreateFromRotationMatrix(mparentRot);
+            var address = String.Format("/{0}", joint.JointType);
+            if (KinectHelper.BoneOrientationIsValid(qparentOrientation))
+            {
+                Quaternion qSend;
+                
+                qSend = qparentOrientation;
+                
+                return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), -qSend.W, -qSend.X, qSend.Y, qSend.Z);
+
+            }
+            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z));
+
+
+
+
+
+
+
+
+            /*
 
 
             string jointName = joint.JointType.ToString();
@@ -66,7 +112,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
             //qSend= KinectHelper.RotationBetweenQuaternions(qSend, qOrientationParent);
             return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), qSend.W, qSend.X, -qSend.Z, qSend.Y);
 
-
+            */
 
 
             /*
@@ -171,6 +217,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
             //System.Diagnostics.Debug.WriteLine(address);
             return new OscMessage(address, state.ToString(), confidence.ToString());
         }*/
+
     }
 }
 
