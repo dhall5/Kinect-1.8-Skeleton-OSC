@@ -57,9 +57,20 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
             Matrix4x4 mparentRot = new Matrix4x4(rotation.M11, rotation.M12, rotation.M13, rotation.M14, rotation.M21, rotation.M22, rotation.M23, rotation.M24, rotation.M31, rotation.M32, rotation.M33, rotation.M34, rotation.M41, rotation.M42, rotation.M43, rotation.M44);
 
 
-            Matrix4x4 degrees90= Matrix4x4.CreateRotationY(3.14159f);
-            Quaternion rotate90 = Quaternion.CreateFromRotationMatrix(degrees90);
-            mparentRot=Matrix4x4.Transform(mparentRot, rotate90);
+            //Matrix4x4 YMirror= Matrix4x4.CreateRotationY(3.14159f);
+            //Quaternion rotateY = Quaternion.CreateFromRotationMatrix(YMirror);
+
+            //http://gamedev.stackexchange.com/questions/27003/flip-rotation-matrix
+            //Matrix4x4 Mirror = new Matrix4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0);
+            //mparentRot = Mirror * mparentRot * Mirror;
+            Vector3 pos = new Vector3(position.X, position.Y, position.Z);
+            Vector3 normal = new Vector3(0, 1, 0);
+            float m_ClipPlaneOffset = 0.07f;
+
+            float d = -Vector3.Dot(normal, pos) - m_ClipPlaneOffset;
+            System.Numerics.Vector4 reflectionPlane = new System.Numerics.Vector4(normal.X, normal.Y, normal.Z, d);
+
+            CalculateReflectionMatrix(ref mparentRot, reflectionPlane);
 
             Quaternion qjointOrientation = Quaternion.CreateFromRotationMatrix(mjointRot);
             Quaternion qparentOrientation = Quaternion.CreateFromRotationMatrix(mparentRot);
@@ -210,6 +221,34 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
 
 
         }
+
+
+        //http://wiki.unity3d.com/index.php/MirrorReflection4
+        // Calculates reflection matrix around the given plane
+        private static void CalculateReflectionMatrix(ref Matrix4x4 reflectionMat, System.Numerics.Vector4 plane)
+        {
+            reflectionMat.M11 = (1F - 2F * plane.X * plane.X);
+            reflectionMat.M12 = (-2F * plane.X * plane.Y);
+            reflectionMat.M13 = (-2F * plane.X * plane.Z);
+            reflectionMat.M14 = (-2F * plane.W * plane.X);
+
+            reflectionMat.M21 = (-2F * plane.Y * plane.X);
+            reflectionMat.M22 = (1F - 2F * plane.Y * plane.Y);
+            reflectionMat.M23 = (-2F * plane.Y * plane.Z);
+            reflectionMat.M24 = (-2F * plane.W * plane.Y);
+
+            reflectionMat.M31 = (-2F * plane.Z * plane.X);
+            reflectionMat.M32 = (-2F * plane.Z * plane.Y);
+            reflectionMat.M33 = (1F - 2F * plane.Z * plane.Z);
+            reflectionMat.M34 = (-2F * plane.W * plane.Z);
+
+            reflectionMat.M41 = 0F;
+            reflectionMat.M42 = 0F;
+            reflectionMat.M43 = 0F;
+            reflectionMat.M44 = 1F;
+        }
+
+
 
         /*public OscMessage BuildHandMessage(Body body, string key, HandState state, TrackingConfidence confidence)
         {
