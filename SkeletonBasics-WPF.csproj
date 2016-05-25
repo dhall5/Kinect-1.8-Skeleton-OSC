@@ -73,6 +73,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Filters\BoneOrientationConstraints.cs" />
     <Compile Include="Filters\NativeMethods.cs" />
     <Compile Include="Filters\SkeletonJointsFilterClippedLegs.cs" />
     <Compile Include="Filters\SkeletonJointsMirror.cs" />

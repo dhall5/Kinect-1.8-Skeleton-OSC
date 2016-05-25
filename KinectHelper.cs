@@ -268,6 +268,51 @@ namespace Microsoft.Samples.Kinect.Avateering
         }
 
         /// <summary>
+        /// Matrix4ToXNAMatrix converts a Matrix4 object holding Joint Orientation to an XNA Matrix.
+        /// Matrix is initialized to zeros, and the joint orientation only holds a 3x3 rotation matrix.
+        /// </summary>
+        /// <param name="mat">A Matrix4 object to be converted to an XNA Matrix.</param>
+        /// <returns>Returns an XNA Matrix.</returns>
+        public static Matrix4 Matrix4ToXNAMatrix(Microsoft.Kinect.Matrix4 mat)
+        {
+            Matrix4 converted = new Matrix4();
+            converted.M11 = mat.M11;
+            converted.M12 = mat.M12;
+            converted.M13 = mat.M13;
+            converted.M21 = mat.M21;
+            converted.M22 = mat.M22;
+            converted.M23 = mat.M23;
+            converted.M31 = mat.M31;
+            converted.M32 = mat.M32;
+            converted.M33 = mat.M33;
+            converted.M44 = mat.M44;
+            return converted;
+        }
+
+        /// <summary>
+        /// XNAMatrixToMatrix4 converts a XNA Matrix object holding Joint Orientation to a Kinect Matrix4.
+        /// Matrix is initialized to zeros, and the joint orientation only holds a 3x3 rotation matrix.
+        /// </summary>
+        /// <param name="mat">An XNA Matrix object to be converted to a Kinect Matrix4.</param>
+        /// <returns>Returns a Kinect Matrix4.</returns>
+        public static Microsoft.Kinect.Matrix4 XNAMatrixToMatrix4(Matrix4x4 mat)
+        {
+            Microsoft.Kinect.Matrix4 converted = new Microsoft.Kinect.Matrix4();
+            converted.M11 = mat.M11;
+            converted.M12 = mat.M12;
+            converted.M13 = mat.M13;
+            converted.M21 = mat.M21;
+            converted.M22 = mat.M22;
+            converted.M23 = mat.M23;
+            converted.M31 = mat.M31;
+            converted.M32 = mat.M32;
+            converted.M33 = mat.M33;
+            converted.M44 = mat.M44;
+            return converted;
+        }
+
+
+        /// <summary>
         /// XNAQuaternionToVector4 converts an XNAQuaternion object holding Joint Orientation to a KinectSDK Vector4.
         /// </summary>
         /// <param name="quaternion">An XNA Quaternion object to be converted to a Kinect Vector4.</param>

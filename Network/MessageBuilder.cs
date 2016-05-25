@@ -48,205 +48,45 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics.Network.BodySender
             }
             
             var jointRotation = body.BoneOrientations[joint.JointType].AbsoluteRotation.Matrix;
-
-            JointType parentJoint = KinectHelper.ParentBoneJoint(joint.JointType);
-            var position = body.Joints[parentJoint].Position;
-            var rotation = body.BoneOrientations[parentJoint].AbsoluteRotation.Matrix;
+            var position = body.Joints[joint.JointType].Position;
+            var rotation = body.BoneOrientations[joint.JointType].AbsoluteRotation.Matrix;
+            var qrotation = body.BoneOrientations[joint.JointType].AbsoluteRotation.Quaternion;
+  
+            Quaternion qOrientation = new Quaternion(qrotation.X, qrotation.Y, qrotation.Z, qrotation.W);
 
             Matrix4x4 mjointRot = new Matrix4x4(jointRotation.M11, jointRotation.M12, jointRotation.M13, jointRotation.M14, jointRotation.M21, jointRotation.M22, jointRotation.M23, jointRotation.M24, jointRotation.M31, jointRotation.M32, jointRotation.M33, jointRotation.M34, jointRotation.M41, jointRotation.M42, jointRotation.M43, jointRotation.M44);
-            Matrix4x4 mparentRot = new Matrix4x4(rotation.M11, rotation.M12, rotation.M13, rotation.M14, rotation.M21, rotation.M22, rotation.M23, rotation.M24, rotation.M31, rotation.M32, rotation.M33, rotation.M34, rotation.M41, rotation.M42, rotation.M43, rotation.M44);
 
 
-            //Matrix4x4 YMirror= Matrix4x4.CreateRotationY(3.14159f);
-            //Quaternion rotateY = Quaternion.CreateFromRotationMatrix(YMirror);
+            //System.Numerics.Vector4 v = new System.Numerics.Vector4(qrotation.X, qrotation.Y, qrotation.Z, qrotation.W);
+            //Plane pln = new Plane(v);
+            //Matrix4x4 reflectionParent = System.Numerics.Matrix4x4.CreateReflection(pln);
+            //qSend = Quaternion.CreateFromRotationMatrix(reflectionParent);
+            //qSend.W = qrotation.W;
 
-            //http://gamedev.stackexchange.com/questions/27003/flip-rotation-matrix
-            //Matrix4x4 Mirror = new Matrix4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0);
-            //mparentRot = Mirror * mparentRot * Mirror;
-            Vector3 pos = new Vector3(position.X, position.Y, position.Z);
-            Vector3 normal = new Vector3(0, 1, 0);
-            float m_ClipPlaneOffset = 0.07f;
+            var flipMat = new Matrix4x4(1, 0, 0, 0,
+                                       0, -1, 0, 0,
+                                       0, 0, 1, 0,
+                                       0, 0, 0, 1
+                                   );
+            mjointRot = flipMat * mjointRot * flipMat;
 
-            float d = -Vector3.Dot(normal, pos) - m_ClipPlaneOffset;
-            System.Numerics.Vector4 reflectionPlane = new System.Numerics.Vector4(normal.X, normal.Y, normal.Z, d);
 
-            CalculateReflectionMatrix(ref mparentRot, reflectionPlane);
 
-            Quaternion qjointOrientation = Quaternion.CreateFromRotationMatrix(mjointRot);
-            Quaternion qparentOrientation = Quaternion.CreateFromRotationMatrix(mparentRot);
             var address = String.Format("/{0}", joint.JointType);
-            if (KinectHelper.BoneOrientationIsValid(qparentOrientation))
+            if (KinectHelper.BoneOrientationIsValid(qOrientation))
             {
                 Quaternion qSend;
+                qSend =  Quaternion.CreateFromRotationMatrix(mjointRot);
                 
-                qSend = qparentOrientation;
-                
-                return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), -qSend.W, -qSend.X, qSend.Y, qSend.Z);
+                return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), qSend.W, qSend.X, qSend.Y, qSend.Z);
 
             }
             return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z));
 
-
-
-
-
-
-
-
-            /*
-
-
-            string jointName = joint.JointType.ToString();
-            if (jointName.IndexOf("Left") >= 0)
-            {
-                jointName = jointName.Replace("Left", "Right");
-            }
-            else if (jointName.IndexOf("Right") >= 0)
-            {
-                jointName = jointName.Replace("Right", "Left");
-            }
-            var address = String.Format("/{0}", jointName);
-            var position = joint.Position;
-            Microsoft.Kinect.Vector4 vec;
-            vec = body.BoneOrientations[joint.JointType].HierarchicalRotation.Quaternion;
-            Quaternion qOrientation = new Quaternion(vec.X, vec.Y, vec.Z, vec.W);
-
-            JointType parentJoint = body.BoneOrientations[joint.JointType].StartJoint;
-            Microsoft.Kinect.Vector4 vecParentOrientation = body.BoneOrientations[parentJoint].HierarchicalRotation.Quaternion;
-
-
-            Quaternion qOrientationParent = new Quaternion(vecParentOrientation.X, vecParentOrientation.Y, vecParentOrientation.Z, vecParentOrientation.W);
-            Quaternion qSend;
-            qSend = (Quaternion.Normalize(qOrientationParent) * Quaternion.Conjugate(qOrientationParent)) * qOrientation;
-
-            //qSend = (Quaternion.Divide(new Quaternion(1,0,0,0), Quaternion.Normalize(qOrientationParent)) * Quaternion.Conjugate(qOrientationParent)) * qOrientation;
-            //qSend= KinectHelper.RotationBetweenQuaternions(qSend, qOrientationParent);
-            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), qSend.W, qSend.X, -qSend.Z, qSend.Y);
-
-            */
-
-
-            /*
-
-
-
-            //https://msdn.microsoft.com/en-us/library/hh973073.aspx
-
-
-            string jointName = joint.JointType.ToString();
-            if (jointName.IndexOf("Left") >= 0)
-            {
-                jointName = jointName.Replace("Left", "Right");
-            }
-            else if (jointName.IndexOf("Right") >= 0)
-            {
-                jointName = jointName.Replace("Right", "Left");
-            }
-
-            var address = String.Format("/{0}", jointName);
-            var position = joint.Position;
-            var q = body.BoneOrientations[joint.JointType].AbsoluteRotation.Quaternion; // .AbsoluteRotation.Quaternion;
-            var jointQ = new Quaternion(q.X, q.Y, q.Z, q.W);
-
-            JointType start = body.BoneOrientations[joint.JointType].StartJoint;
-            var parent = body.BoneOrientations[start].AbsoluteRotation.Quaternion;
-            var parentQ = Quaternion.Normalize(new Quaternion(parent.X, parent.Y, parent.Z, parent.W));
-
-
-            var newq = new Quaternion();
-
-
-            float angle = (float)Math.Acos(Vector3.Dot(new Vector3(0, 1, 0), new Vector3(jointQ.X, jointQ.Y, jointQ.Z)));
-            //best so far
-            var newq1 = Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), jointQ.W);
-            //newq = KinectHelper.GetShortestRotationBetweenVectors(new Vector3(0, 1, 0), new Vector3(jointQ.X, jointQ.Y, jointQ.Z));
-            //newq = Quaternion.Normalize(Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), jointQ.W));
-            newq = jointQ;
-
-
-            newq = KinectHelper.RotationBetweenQuaternions(parentQ, jointQ);
-            newq = Quaternion.Slerp(newq, newq1, .3f);
-            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), newq.W, -newq.X, -newq.Z, newq.Y);
-
-            */
-
-
-            /*
-            //var newQ = new Quaternion(q.X, -q.Y, q.Z, q.W);
-            //return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), newQ.W, newQ.X, newQ.Y, newQ.Z);
-            JointType start = body.BoneOrientations[joint.JointType].StartJoint;
-            JointType end = body.BoneOrientations[joint.JointType].EndJoint;
-
-            var parent = body.BoneOrientations[start].AbsoluteRotation.Quaternion;
-            var child = body.BoneOrientations[end].AbsoluteRotation.Quaternion;
-            var parentQ = Quaternion.Normalize(new Quaternion(parent.X, parent.Y, parent.Z, parent.W));
-            var childQ = Quaternion.Normalize(new Quaternion(child.X, child.Y, child.Z, child.W));
-            var jointQ = Quaternion.Normalize(new Quaternion(q.X, q.Y, q.Z, q.W));
-            //https://social.msdn.microsoft.com/Forums/en-US/3f9e03b4-2670-41b5-9a91-2b72c77fe843/using-kinect-v2-jointorientations-along-with-threejs-skinnedmesh?forum=kinectv2sdk
-            var newq =(Quaternion.Inverse(parentQ) * jointQ);
-            /*newq=Quaternion.Lerp(newq, jointQ, 1);
-
-            newq=KinectHelper.RotationBetweenQuaternions(parentQ, childQ);
-            newq = childQ; // Quaternion.Slerp(newq, jointQ, 1);
             
-            //return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), newq.W, newq.X,newq.Y, newq.Z);
-            */
-
-
-
-
-
-
-
-
-            /*Matrix4 m = body.BoneOrientations[joint.JointType].AbsoluteRotation.Matrix;
-            Matrix4x4 newM = new Matrix4x4(m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24, m.M31, m.M32, m.M33, m.M34, m.M41, m.M42, m.M43, m.M44);
-            Matrix4x4 newOutM = Matrix4x4.CreateRotationY(180);
-            Matrix4x4.Invert(newM, out newOutM);
-            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), newOutM.M11, newOutM.M12, newOutM.M13,m.M21,m.M22,m.M23,m.M31,m.M32,m.M33);
-            */
-
-            /*
-            //Vector3 vec0 = sourceValue;
-            Vector3 v = KinectHelper.Position(body, joint.JointType);
-            Quaternion rot = Quaternion.CreateFromAxisAngle(v, q.W);
-            return new OscMessage(address, (body.Position.X + position.X), (body.Position.Y + position.Y), (body.Position.Z + position.Z), -rot.W, -rot.X, rot.Z, rot.Y);
-            */
-
-
-            //return new OscMessage(address, world[0], world[1], world[2], -q.W, -q.X, q.Y, q.Z);
-
-
-            //
-
 
         }
 
-
-        //http://wiki.unity3d.com/index.php/MirrorReflection4
-        // Calculates reflection matrix around the given plane
-        private static void CalculateReflectionMatrix(ref Matrix4x4 reflectionMat, System.Numerics.Vector4 plane)
-        {
-            reflectionMat.M11 = (1F - 2F * plane.X * plane.X);
-            reflectionMat.M12 = (-2F * plane.X * plane.Y);
-            reflectionMat.M13 = (-2F * plane.X * plane.Z);
-            reflectionMat.M14 = (-2F * plane.W * plane.X);
-
-            reflectionMat.M21 = (-2F * plane.Y * plane.X);
-            reflectionMat.M22 = (1F - 2F * plane.Y * plane.Y);
-            reflectionMat.M23 = (-2F * plane.Y * plane.Z);
-            reflectionMat.M24 = (-2F * plane.W * plane.Y);
-
-            reflectionMat.M31 = (-2F * plane.Z * plane.X);
-            reflectionMat.M32 = (-2F * plane.Z * plane.Y);
-            reflectionMat.M33 = (1F - 2F * plane.Z * plane.Z);
-            reflectionMat.M34 = (-2F * plane.W * plane.Z);
-
-            reflectionMat.M41 = 0F;
-            reflectionMat.M42 = 0F;
-            reflectionMat.M43 = 0F;
-            reflectionMat.M44 = 1F;
-        }
 
 
 

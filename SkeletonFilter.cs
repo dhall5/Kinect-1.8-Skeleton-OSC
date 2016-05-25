@@ -3,6 +3,7 @@ using Microsoft.Samples.Kinect.Avateering.Filters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,7 +32,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
             this.clippedLegs = new SkeletonJointsFilterClippedLegs();
             this.sensorOffsetCorrection = new SkeletonJointsSensorOffsetCorrection();
             this.jointPositionFilter = new SkeletonJointsPositionDoubleExponentialFilter();
-            //this.boneOrientationConstraints = new BoneOrientationConstraints(game, this.SkeletonTranslationScaleFactor);
+            this.boneOrientationConstraints = new BoneOrientationConstraints(this.SkeletonTranslationScaleFactor);
             //this.boneOrientationFilter = new BoneOrientationDoubleExponentialFilter();
 
             this.filterClippedLegs = true;
@@ -61,7 +62,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
             this.jointPositionFilter.Init(jointPositionSmoothParameters);
 
             // Setup the bone orientation constraint system
-            //this.boneOrientationConstraints.AddDefaultConstraints();
+            this.boneOrientationConstraints.AddDefaultConstraints();
             //game.Components.Add(this.boneOrientationConstraints);
 
             // Typical smoothing parameters for the bone orientations:
@@ -92,6 +93,13 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
         /// Compensate the avatar joints for sensor height and bring skeleton to floor level if true.
         /// </summary>
         private bool floorOffsetCompensate;
+
+
+        /// <summary>
+        /// The model mesh can be defined at arbitrary non-human size, so re-scale the Kinect translation for drawing the Kinect 3D Skeleton.
+        /// </summary>
+        private Vector3 SkeletonTranslationScaleFactor { get; set; }
+
 
         /// <summary>
         /// Filter to compensate the avatar joints for sensor height and bring skeleton to floor level.
@@ -136,7 +144,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
         /// <summary>
         /// The filter for bone orientations constraints.
         /// </summary>
-       // private BoneOrientationConstraints boneOrientationConstraints;
+        private BoneOrientationConstraints boneOrientationConstraints;
 
         /// <summary>
         /// Draw the Kinect line skeleton using the raw joint positions and joint constraint cones if true.
@@ -255,11 +263,11 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
                 // Filter the joint positions manually, using a double exponential filter.
                 this.jointPositionFilter.UpdateFilter(this.skeleton);
 
-                /*if (this.boneConstraints && null != this.boneOrientationConstraints)
+                if (this.boneConstraints && null != this.boneOrientationConstraints)
                 {
                     // Constrain the joint positions to approximate range of human motion.
                     this.boneOrientationConstraints.Constrain(this.skeleton, this.mirrorView);
-                }*/
+                }
 
                 /*if (this.filterBoneOrientations && null != this.boneOrientationFilter)
                 {
